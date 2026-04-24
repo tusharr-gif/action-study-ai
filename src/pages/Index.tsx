@@ -16,13 +16,16 @@ import {
   ChevronRight,
   BookOpen,
   Upload,
-  Loader2,
   CheckCircle2,
   X,
   Sparkles,
   ArrowRight,
   Lightbulb,
-  ListChecks
+  ListChecks,
+  Activity,
+  Terminal,
+  Cpu,
+  Upload
 } from "lucide-react";
 
 const Index = () => {
@@ -30,66 +33,81 @@ const Index = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [files, setFiles] = useState<{ name: string; size: string; status: string }[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [analysisStep, setAnalysisStep] = useState("");
+  const [streamingConcepts, setStreamingConcepts] = useState<string[]>([]);
+  const [streamingTasks, setStreamingTasks] = useState<{ title: string; duration: string }[]>([]);
   const [analysisResult, setAnalysisResult] = useState<{
     title: string;
     concepts: string[];
     tasks: { title: string; duration: string }[];
   } | null>(null);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const droppedFiles = Array.from(e.dataTransfer.files);
-    processFiles(droppedFiles);
-  }, []);
-
   const processFiles = (newFiles: File[]) => {
     setIsUploading(true);
     setAnalysisResult(null);
-    toast.info(`Analyzing ${newFiles[0]?.name || 'document'}...`, {
-      style: { background: '#1a1a1a', color: '#9b87f5', border: '1px solid #333' }
-    });
+    setUploadProgress(0);
+    setStreamingConcepts([]);
+    setStreamingTasks([]);
     
-    // Simulate complex AI analysis
-    setTimeout(() => {
-      const fileName = newFiles[0]?.name || "Quantum_Physics_Notes.pdf";
-      const processed = newFiles.map(f => ({
-        name: f.name,
-        size: (f.size / 1024 / 1024).toFixed(2) + " MB",
-        status: "Analyzed"
-      }));
-      
-      setFiles(prev => [...processed, ...prev]);
-      setIsUploading(false);
-      
-      // Generate mocked analysis result
-      setAnalysisResult({
-        title: fileName,
-        concepts: ["Wave-Particle Duality", "Schrödinger Equation", "Quantum Entanglement", "Heisenberg Uncertainty Principle"],
-        tasks: [
-          { title: "Derive Probability Densities", duration: "15 min" },
-          { title: "Review Photoelectric Effect", duration: "10 min" },
-          { title: "Practice Spin Matrices", duration: "20 min" }
-        ]
-      });
-      
-      toast.success("Intelligence extraction complete!", {
-        icon: <Sparkles className="w-4 h-4 text-primary" />
-      });
-    }, 2500);
+    const fileName = newFiles[0]?.name || "Document.pdf";
+    const steps = [
+      { msg: "Initializing Neural Engine...", progress: 10 },
+      { msg: "Scanning Document Architecture...", progress: 30 },
+      { msg: "Extracting Semantic Nodes...", progress: 50 },
+      { msg: "Mapping Cognitive Dependencies...", progress: 70 },
+      { msg: "Optimizing Study Trajectory...", progress: 90 },
+      { msg: "Finalizing Action Plan...", progress: 100 },
+    ];
+
+    const concepts = ["Wave-Particle Duality", "Schrödinger Equation", "Quantum Entanglement", "Heisenberg Uncertainty Principle"];
+    const tasks = [
+      { title: "Derive Probability Densities", duration: "15 min" },
+      { title: "Review Photoelectric Effect", duration: "10 min" },
+      { title: "Practice Spin Matrices", duration: "20 min" }
+    ];
+
+    let currentStep = 0;
+    const interval = setInterval(() => {
+      if (currentStep < steps.length) {
+        setAnalysisStep(steps[currentStep].msg);
+        setUploadProgress(steps[currentStep].progress);
+        
+        // Start streaming concepts at step 2
+        if (currentStep === 2) {
+           concepts.forEach((c, i) => {
+             setTimeout(() => setStreamingConcepts(prev => [...prev, c]), i * 400);
+           });
+        }
+        
+        // Start streaming tasks at step 4
+        if (currentStep === 4) {
+           tasks.forEach((t, i) => {
+             setTimeout(() => setStreamingTasks(prev => [...prev, t]), i * 500);
+           });
+        }
+
+        currentStep++;
+      } else {
+        clearInterval(interval);
+        setTimeout(() => {
+          setIsUploading(false);
+          setAnalysisResult({
+            title: fileName,
+            concepts,
+            tasks
+          });
+          setFiles(prev => [{ name: fileName, size: "2.4 MB", status: "Analyzed" }, ...prev]);
+          toast.success("AI Synthesis Complete!", {
+             icon: <Sparkles className="w-4 h-4 text-primary" />,
+             style: { background: '#050505', border: '1px solid #333', color: '#fff' }
+          });
+        }, 800);
+      }
+    }, 1200);
   };
 
-  const [actionItems, setActionItems] = useState([
+  const [actionItems] = useState([
     { id: 1, title: "Review Quantum Mechanics Notes", time: "25 min", difficulty: "High", type: "Study" },
     { id: 2, title: "Practice Calculus Integrals", time: "40 min", difficulty: "Medium", type: "Practice" },
     { id: 3, title: "Revise Bio-Cell Mapping", time: "15 min", difficulty: "Low", type: "Revise" },
@@ -99,7 +117,7 @@ const Index = () => {
     { icon: Target, label: "Mission Control" },
     { icon: FileText, label: "Document Hub" },
     { icon: TrendingUp, label: "Skill Analytics" },
-    { icon: BookOpen, label: "Study Vault" },
+    { icon: BrainCircuit, label: "Study Vault" },
     { icon: Zap, label: "Practice Arena" },
   ];
 
@@ -107,208 +125,234 @@ const Index = () => {
     switch (activeTab) {
       case "Mission Control":
         return (
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             
-            {/* Document-to-Action Engine or Analysis Result */}
-            <div className="xl:col-span-2 space-y-6">
-              {!analysisResult ? (
+            <div className="xl:col-span-2 space-y-8">
+              {!isUploading && !analysisResult ? (
                 <Card className="glass border-white/10 shadow-glow-soft overflow-hidden group">
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
                       <div>
-                        <CardTitle className="text-2xl font-bold text-white">Document-to-Action Engine</CardTitle>
-                        <CardDescription className="text-slate-300 font-medium">Drop nodes, PDFs, or images to extract intelligence</CardDescription>
+                        <CardTitle className="text-3xl font-black text-white tracking-tight">Document-to-Action Engine</CardTitle>
+                        <CardDescription className="text-slate-400 font-bold text-lg">Drop PDFs to extract real-time intelligence</CardDescription>
                       </div>
-                      <Zap className={`w-10 h-10 text-primary ${isUploading ? 'animate-pulse' : 'opacity-80'}`} />
+                      <Zap className="w-12 h-12 text-primary opacity-80 group-hover:scale-110 transition-transform" />
                     </div>
                   </CardHeader>
                   <CardContent>
                     <div 
-                      className={`relative border-2 border-dashed rounded-3xl p-16 flex flex-col items-center justify-center gap-6 transition-all duration-500 ${
-                        isDragging ? "border-primary bg-primary/20 scale-[0.99] shadow-glow" : "border-white/10 bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/20"
+                      className={`relative border-2 border-dashed rounded-[40px] p-20 flex flex-col items-center justify-center gap-8 transition-all duration-500 ${
+                        isDragging ? "border-primary bg-primary/20 scale-[0.98] shadow-glow" : "border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/20"
                       } cursor-pointer`}
-                      onDragOver={handleDragOver}
-                      onDragLeave={handleDragLeave}
-                      onDrop={handleDrop}
+                      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                      onDragLeave={() => setIsDragging(false)}
+                      onDrop={(e) => { e.preventDefault(); setIsDragging(false); processFiles(Array.from(e.dataTransfer.files)); }}
                       onClick={() => document.getElementById('file-upload')?.click()}
                     >
-                      <input 
-                        id="file-upload" 
-                        type="file" 
-                        multiple 
-                        className="hidden" 
-                        onChange={(e) => e.target.files && processFiles(Array.from(e.target.files))}
-                      />
-                      
-                      <div className={`w-20 h-20 rounded-2xl flex items-center justify-center transition-all duration-500 ${isDragging ? "bg-primary rotate-12 scale-110 shadow-glow" : "bg-primary/20 group-hover:bg-primary/30"}`}>
-                        {isUploading ? (
-                          <Loader2 className="w-10 h-10 text-white animate-spin" />
-                        ) : (
-                          <Upload className={`w-10 h-10 ${isDragging ? "text-white" : "text-primary"}`} />
-                        )}
+                      <input id="file-upload" type="file" multiple className="hidden" onChange={(e) => e.target.files && processFiles(Array.from(e.target.files))} />
+                      <div className={`w-24 h-24 rounded-3xl flex items-center justify-center transition-all duration-500 ${isDragging ? "bg-primary rotate-12 scale-110 shadow-glow" : "bg-primary/20 group-hover:bg-primary/30"}`}>
+                        <Upload className={`w-12 h-12 ${isDragging ? "text-white" : "text-primary"}`} />
                       </div>
-                      <div className="text-center space-y-2">
-                        <p className="text-white font-bold text-2xl tracking-tight">
-                          {isDragging ? "Release to Analyze" : "Click or drag documents to start"}
-                        </p>
-                        <p className="text-slate-400 font-medium text-lg">Supports PDF, JPG, MD, and Voice Queries</p>
+                      <div className="text-center space-y-3">
+                        <p className="text-white font-black text-3xl tracking-tight leading-none">Click or drag to start</p>
+                        <p className="text-slate-500 font-bold text-xl">PDF, JPG, MD, and Voice Queries</p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-              ) : (
-                <Card className="glass border-primary/30 shadow-glow overflow-hidden animate-in zoom-in-95 duration-500">
-                  <CardHeader className="bg-primary/10 border-b border-white/5 pb-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                          <CheckCircle2 className="w-6 h-6 text-primary" />
+              ) : isUploading ? (
+                <Card className="glass border-primary/40 shadow-glow overflow-hidden animate-in zoom-in-95 duration-500">
+                  <CardHeader className="bg-primary/10 border-b border-white/5 p-8">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center">
+                          <Activity className="w-8 h-8 text-primary animate-pulse" />
                         </div>
                         <div>
-                          <CardTitle className="text-xl font-bold text-white">{analysisResult.title}</CardTitle>
-                          <CardDescription className="text-primary font-semibold">Analysis Successful</CardDescription>
+                          <CardTitle className="text-2xl font-black text-white uppercase tracking-tighter">Live Neural Synthesis</CardTitle>
+                          <div className="flex items-center gap-2">
+                             <span className="w-2 h-2 rounded-full bg-primary animate-ping" />
+                             <CardDescription className="text-primary font-black text-sm uppercase tracking-widest">{analysisStep}</CardDescription>
+                          </div>
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon" className="hover:bg-white/10 rounded-full" onClick={() => setAnalysisResult(null)}>
-                        <X className="w-5 h-5" />
+                      <div className="text-right">
+                         <p className="text-3xl font-black text-white">{uploadProgress}%</p>
+                         <p className="text-[10px] font-black text-primary uppercase tracking-widest">Optimizing</p>
+                      </div>
+                    </div>
+                    <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden p-[1px] border border-white/10">
+                       <div className="h-full bg-gradient-hero rounded-full shadow-glow transition-all duration-1000" style={{ width: `${uploadProgress}%` }} />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-8 grid grid-cols-1 md:grid-cols-2 gap-10">
+                     <div className="space-y-6">
+                        <div className="flex items-center gap-2 text-primary font-black uppercase text-xs tracking-widest">
+                           <Terminal className="w-4 h-4" /> Live Concept Stream
+                        </div>
+                        <div className="flex flex-wrap gap-3 min-h-[100px]">
+                           {streamingConcepts.map((c, i) => (
+                             <Badge key={i} className="bg-primary/20 text-white border-primary/30 px-4 py-2 text-sm font-bold animate-in slide-in-from-left-4 duration-500 shadow-glow-soft">
+                               {c}
+                             </Badge>
+                           ))}
+                           {streamingConcepts.length === 0 && <p className="text-slate-600 font-bold italic">Awaiting data nodes...</p>}
+                        </div>
+                     </div>
+                     <div className="space-y-6">
+                        <div className="flex items-center gap-2 text-accent font-black uppercase text-xs tracking-widest">
+                           <Cpu className="w-4 h-4" /> Action Plan Synthesis
+                        </div>
+                        <div className="space-y-3 min-h-[150px]">
+                           {streamingTasks.map((t, i) => (
+                             <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 animate-in slide-in-from-right-4 duration-500 shadow-glow-soft">
+                                <span className="text-white font-black">{t.title}</span>
+                                <Badge className="bg-accent/20 text-accent border-none">{t.duration}</Badge>
+                             </div>
+                           ))}
+                           {streamingTasks.length === 0 && <p className="text-slate-600 font-bold italic">Synthesizing study trajectory...</p>}
+                        </div>
+                     </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="glass border-green-500/30 shadow-glow overflow-hidden animate-in zoom-in-95 duration-500">
+                  <CardHeader className="bg-green-500/10 border-b border-white/5 p-8">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-green-500/20 flex items-center justify-center">
+                          <CheckCircle2 className="w-8 h-8 text-green-400" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-2xl font-black text-white">{analysisResult?.title}</CardTitle>
+                          <CardDescription className="text-green-400 font-black uppercase tracking-widest text-xs">Synthesis Complete • Neural Model Applied</CardDescription>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="icon" className="hover:bg-white/10 rounded-full h-12 w-12" onClick={() => setAnalysisResult(null)}>
+                        <X className="w-6 h-6" />
                       </Button>
                     </div>
                   </CardHeader>
-                  <CardContent className="p-6 space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      {/* Concepts */}
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-primary font-bold uppercase text-xs tracking-widest">
-                          <Lightbulb className="w-4 h-4" /> Key Concepts Extracted
+                  <CardContent className="p-8 space-y-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                      <div className="space-y-6">
+                        <div className="flex items-center gap-2 text-primary font-black uppercase text-xs tracking-widest">
+                          <Lightbulb className="w-5 h-5" /> Mastered Concepts
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          {analysisResult.concepts.map((c, i) => (
-                            <Badge key={i} className="bg-white/5 hover:bg-primary/20 text-slate-100 border-white/10 px-3 py-1 text-sm font-medium transition-colors">
+                        <div className="flex flex-wrap gap-3">
+                          {analysisResult?.concepts.map((c, i) => (
+                            <Badge key={i} className="bg-white/5 hover:bg-primary/20 text-white border-white/10 px-5 py-2 text-base font-bold transition-all hover:scale-110 cursor-default">
                               {c}
                             </Badge>
                           ))}
                         </div>
                       </div>
-                      
-                      {/* Tasks */}
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-accent font-bold uppercase text-xs tracking-widest">
-                          <ListChecks className="w-4 h-4" /> AI Generated Action Plan
+                      <div className="space-y-6">
+                        <div className="flex items-center gap-2 text-accent font-black uppercase text-xs tracking-widest">
+                          <ListChecks className="w-5 h-5" /> Live Action Plan
                         </div>
-                        <div className="space-y-2">
-                          {analysisResult.tasks.map((t, i) => (
-                            <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:border-accent/30 transition-all cursor-pointer group">
-                              <span className="text-slate-200 font-semibold group-hover:text-accent">{t.title}</span>
-                              <Badge variant="outline" className="bg-accent/10 text-accent border-accent/20 text-[10px] font-bold">{t.duration}</Badge>
+                        <div className="space-y-3">
+                          {analysisResult?.tasks.map((t, i) => (
+                            <div key={i} className="flex items-center justify-between p-5 rounded-3xl bg-white/5 border border-white/5 hover:border-accent/40 transition-all cursor-pointer group shadow-glow-soft">
+                              <span className="text-white font-black group-hover:text-accent text-lg">{t.title}</span>
+                              <Badge className="bg-accent/20 text-accent border-none font-black px-3 py-1">{t.duration}</Badge>
                             </div>
                           ))}
                         </div>
                       </div>
                     </div>
-                    
-                    <div className="flex gap-4 pt-4 border-t border-white/5">
-                      <Button className="flex-1 bg-primary hover:bg-primary/90 text-white font-bold h-12 shadow-glow" onClick={() => {
+                    <div className="flex gap-6 pt-8 border-t border-white/10">
+                      <Button className="flex-1 bg-gradient-hero hover:scale-105 transition-all text-white font-black h-16 rounded-2xl shadow-glow text-lg" onClick={() => {
                         toast.success("Tasks added to Mission Control!");
                         setAnalysisResult(null);
                       }}>
-                        Add to Priorities <ArrowRight className="w-4 h-4 ml-2" />
+                        Deploy Plan <ArrowRight className="w-5 h-5 ml-2" />
                       </Button>
-                      <Button variant="outline" className="flex-1 border-white/10 hover:bg-white/5 font-bold h-12" onClick={() => setActiveTab("Study Vault")}>
-                        Save to Vault
+                      <Button variant="outline" className="flex-1 border-white/10 hover:bg-white/5 font-black h-16 rounded-2xl text-lg text-slate-300" onClick={() => setActiveTab("Study Vault")}>
+                        Store in Vault
                       </Button>
                     </div>
                   </CardContent>
                 </Card>
               )}
 
-              {/* Performance Section (Visible on Mission Control) */}
               <Card className="glass border-white/5 shadow-elegant overflow-hidden">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardHeader className="flex flex-row items-center justify-between p-8">
                   <div>
-                    <CardTitle className="text-xl font-bold text-white">Adaptive Memory Map</CardTitle>
-                    <CardDescription className="text-slate-400 font-medium">Cognitive retention tracking</CardDescription>
+                    <CardTitle className="text-2xl font-black text-white">Adaptive Memory Map</CardTitle>
+                    <CardDescription className="text-slate-400 font-bold text-lg">Real-time cognitive retention tracker</CardDescription>
                   </div>
-                  <div className="flex gap-2">
-                    <Badge className="bg-green-500/20 text-green-400 border-none font-bold">92% Ready</Badge>
-                    <Badge className="bg-red-500/20 text-red-400 border-none font-bold">Needs Revision</Badge>
+                  <div className="flex gap-3">
+                    <Badge className="bg-green-500/20 text-green-400 border-none font-black px-4 py-2 text-sm">92% Ready</Badge>
+                    <Badge className="bg-red-500/20 text-red-400 border-none font-black px-4 py-2 text-sm">Needs Revision</Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="h-64 flex items-center justify-center relative overflow-hidden">
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(155,135,245,0.1)_0%,transparent_70%)]" />
-                  <div className="flex flex-col items-center gap-3 relative z-10">
-                    <BrainCircuit className="w-16 h-16 text-primary animate-pulse" />
-                    <p className="text-slate-200 font-bold text-lg">Synthesizing Learning Patterns...</p>
+                <CardContent className="h-80 flex items-center justify-center relative overflow-hidden">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(155,135,245,0.15)_0%,transparent_70%)]" />
+                  <div className="flex flex-col items-center gap-4 relative z-10">
+                    <BrainCircuit className="w-20 h-20 text-primary animate-pulse" />
+                    <p className="text-white font-black text-2xl tracking-tighter">Neural Engine Synchronizing...</p>
+                    <div className="flex gap-1">
+                       {[...Array(5)].map((_, i) => <div key={i} className="w-2 h-2 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: `${i * 0.1}s` }} />)}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Sidebar Modules (Priorities & Coach) */}
-            <div className="space-y-6">
-              {/* Smart Study Priorities */}
-              <Card className="glass border-white/10 shadow-elegant overflow-hidden h-[400px] flex flex-col">
-                <CardHeader className="bg-white/[0.03] border-b border-white/10 shrink-0">
-                  <div className="flex items-center gap-2">
-                    <Target className="w-6 h-6 text-accent" />
-                    <CardTitle className="text-xl font-bold text-white">AI Priorities</CardTitle>
+            <div className="space-y-8">
+              <Card className="glass border-white/10 shadow-elegant overflow-hidden h-[450px] flex flex-col">
+                <CardHeader className="bg-white/[0.03] border-b border-white/10 p-6">
+                  <div className="flex items-center gap-3">
+                    <Target className="w-8 h-8 text-accent shadow-glow" />
+                    <CardTitle className="text-2xl font-black text-white">AI Priorities</CardTitle>
                   </div>
                 </CardHeader>
                 <ScrollArea className="flex-1">
                   <CardContent className="p-0">
                     {actionItems.map((item, i) => (
-                      <div 
-                        key={i} 
-                        onClick={() => toast.success(`Started: ${item.title}`)}
-                        className="p-5 border-b border-white/5 hover:bg-white/[0.05] transition-all group cursor-pointer flex items-center justify-between"
-                      >
-                        <div className="space-y-2">
-                          <p className="font-bold text-slate-100 text-base group-hover:text-primary transition-colors">{item.title}</p>
-                          <div className="flex items-center gap-4 text-sm font-medium text-slate-400">
-                            <span className="flex items-center gap-1.5"><Timer className="w-4 h-4 text-slate-500" /> {item.time}</span>
-                            <Badge variant="outline" className={`text-[10px] uppercase font-black py-0 h-5 border-none ${
+                      <div key={i} onClick={() => toast.success(`Active: ${item.title}`)} className="p-6 border-b border-white/5 hover:bg-white/[0.05] transition-all group cursor-pointer flex items-center justify-between">
+                        <div className="space-y-3">
+                          <p className="font-black text-white text-lg group-hover:text-primary transition-colors">{item.title}</p>
+                          <div className="flex items-center gap-5 text-sm font-bold text-slate-400">
+                            <span className="flex items-center gap-2"><Timer className="w-5 h-5 text-slate-500" /> {item.time}</span>
+                            <Badge className={`px-3 py-1 rounded-lg font-black uppercase text-[10px] ${
                               item.difficulty === 'High' ? 'bg-red-500/20 text-red-400' : 
                               item.difficulty === 'Medium' ? 'bg-orange-500/20 text-orange-400' : 'bg-green-500/20 text-green-400'
-                            }`}>
-                              {item.difficulty}
-                            </Badge>
+                            }`}>{item.difficulty}</Badge>
                           </div>
                         </div>
-                        <ChevronRight className="w-6 h-6 text-slate-600 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                        <ChevronRight className="w-7 h-7 text-slate-700 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                       </div>
                     ))}
-                    <div className="p-6 flex justify-center">
-                      <Button variant="ghost" onClick={() => setActiveTab("Study Vault")} className="text-sm text-primary hover:text-white hover:bg-primary/20 uppercase tracking-widest font-black">
-                        View all optimized tasks
+                    <div className="p-8 flex justify-center">
+                      <Button variant="ghost" onClick={() => setActiveTab("Study Vault")} className="text-sm text-primary hover:text-white hover:bg-primary/20 uppercase tracking-[0.2em] font-black">
+                        Analyze Full Directory
                       </Button>
                     </div>
                   </CardContent>
                 </ScrollArea>
               </Card>
 
-              {/* AI Coach Feedback */}
-              <Card className="glass border-primary/20 shadow-glow-soft bg-gradient-to-br from-primary/10 to-transparent">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center gap-2">
-                    <MessageSquareCode className="w-6 h-6 text-primary" />
-                    <CardTitle className="text-xl font-bold text-white">AI Coach</CardTitle>
+              <Card className="glass border-primary/20 shadow-glow-soft bg-gradient-to-br from-primary/15 to-transparent">
+                <CardHeader className="p-6 pb-2">
+                  <div className="flex items-center gap-3">
+                    <MessageSquareCode className="w-8 h-8 text-primary shadow-glow" />
+                    <CardTitle className="text-2xl font-black text-white">AI Coach</CardTitle>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-6 p-6">
-                  <div className="bg-black/40 rounded-2xl p-5 border border-primary/30 shadow-inner">
-                    <p className="text-base text-slate-200 italic leading-relaxed font-medium">
+                <CardContent className="space-y-8 p-8">
+                  <div className="bg-black/60 rounded-[30px] p-6 border border-primary/30 shadow-2xl">
+                    <p className="text-lg text-slate-200 italic leading-relaxed font-bold">
                       "You've mastered Calculus basic derivatives! I suggest skipping 'Chain Rule Intro' and jumping straight to 
-                      <strong className="text-primary mx-1 font-bold">Integration by Parts</strong> to maintain high momentum."
+                      <strong className="text-primary mx-1 font-black underline decoration-primary/30 underline-offset-4">Integration by Parts</strong> to maintain high momentum."
                     </p>
                   </div>
-                  <div className="flex gap-3">
-                    <Button 
-                      onClick={() => toast.success("Plan Synchronized!")}
-                      size="lg" 
-                      className="bg-primary text-white hover:bg-primary/90 font-bold flex-1 shadow-glow"
-                    >
-                      Accept & Learn
+                  <div className="flex gap-4">
+                    <Button onClick={() => toast.success("Plan Synchronized!")} size="lg" className="bg-primary text-white hover:bg-primary/90 font-black flex-1 h-16 rounded-2xl shadow-glow text-lg">
+                      Accept & Sync
                     </Button>
-                    <Button size="lg" variant="ghost" className="flex-1 text-slate-300 font-bold hover:bg-white/5">Suggest Break</Button>
+                    <Button size="lg" variant="ghost" className="flex-1 text-slate-400 font-black hover:bg-white/5 h-16 rounded-2xl">Skip</Button>
                   </div>
                 </CardContent>
               </Card>
@@ -317,40 +361,42 @@ const Index = () => {
         );
       case "Document Hub":
         return (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-4xl font-black text-white tracking-tight">Knowledge Base</h3>
-                <p className="text-slate-400 font-medium text-lg mt-1">Your synthesized study materials</p>
+                <h3 className="text-6xl font-black text-white tracking-tighter">Knowledge Base</h3>
+                <p className="text-slate-400 font-bold text-xl mt-2">Neural indexing of your synthesized materials</p>
               </div>
-              <Button onClick={() => document.getElementById('file-upload')?.click()} className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-6 shadow-glow">
-                <Plus className="w-5 h-5 mr-2" /> Upload New
+              <Button onClick={() => document.getElementById('file-upload')?.click()} className="bg-primary hover:bg-primary/90 text-white font-black h-16 px-10 rounded-2xl shadow-glow text-lg">
+                <Plus className="w-6 h-6 mr-2" /> Upload New Node
               </Button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {files.length === 0 ? (
-                <div className="col-span-full py-32 border-2 border-dashed border-white/10 rounded-[40px] flex flex-col items-center justify-center text-slate-500 bg-white/[0.01]">
-                  <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-6">
-                    <FileText className="w-12 h-12 opacity-40" />
+                <div className="col-span-full py-40 border-2 border-dashed border-white/10 rounded-[60px] flex flex-col items-center justify-center text-slate-500 bg-white/[0.01]">
+                  <div className="w-32 h-32 rounded-[40px] bg-white/5 flex items-center justify-center mb-8">
+                    <FileText className="w-16 h-16 opacity-30" />
                   </div>
-                  <p className="text-2xl font-bold text-slate-300">Your hub is empty</p>
-                  <p className="text-slate-500 mt-2">Upload a PDF to see the magic happen</p>
-                  <Button variant="link" className="text-primary font-bold mt-4 text-lg" onClick={() => setActiveTab("Mission Control")}>Back to Mission Control</Button>
+                  <p className="text-3xl font-black text-white">Your hub is empty</p>
+                  <p className="text-slate-500 mt-3 font-bold text-lg">Upload a document to initialize the learning engine</p>
+                  <Button variant="link" className="text-primary font-black mt-6 text-xl hover:no-underline hover:text-white" onClick={() => setActiveTab("Mission Control")}>Return to Mission Control</Button>
                 </div>
               ) : (
                 files.map((file, i) => (
-                  <Card key={i} className="glass border-white/10 hover:border-primary/50 transition-all group overflow-hidden">
-                    <CardContent className="p-6 flex items-start gap-5">
-                      <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-primary/20 transition-all group-hover:scale-110">
-                        <FileText className="w-8 h-8 text-slate-400 group-hover:text-primary" />
+                  <Card key={i} className="glass border-white/10 hover:border-primary/50 transition-all group overflow-hidden rounded-[30px] shadow-glow-soft">
+                    <CardContent className="p-8 flex items-start gap-6">
+                      <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-primary/20 transition-all group-hover:scale-110 group-hover:rotate-6">
+                        <FileText className="w-10 h-10 text-slate-400 group-hover:text-primary" />
                       </div>
-                      <div className="flex-1 overflow-hidden space-y-1">
-                        <p className="font-bold text-lg text-white truncate">{file.name}</p>
-                        <p className="text-sm font-bold text-primary">{file.status}</p>
-                        <p className="text-xs font-medium text-slate-500">{file.size}</p>
+                      <div className="flex-1 overflow-hidden space-y-2">
+                        <p className="font-black text-xl text-white truncate">{file.name}</p>
+                        <div className="flex items-center gap-3">
+                           <Badge className="bg-primary/20 text-primary border-none text-[10px] font-black">{file.status}</Badge>
+                           <p className="text-xs font-black text-slate-500">{file.size}</p>
+                        </div>
                       </div>
-                      <Button size="icon" variant="ghost" className="h-10 w-10 text-slate-600 hover:text-red-400 hover:bg-red-500/10 rounded-xl" onClick={() => setFiles(f => f.filter((_, idx) => idx !== i))}>
-                        <X className="w-5 h-5" />
+                      <Button size="icon" variant="ghost" className="h-12 w-12 text-slate-600 hover:text-red-400 hover:bg-red-500/10 rounded-2xl" onClick={() => setFiles(f => f.filter((_, idx) => idx !== i))}>
+                        <X className="w-6 h-6" />
                       </Button>
                     </CardContent>
                   </Card>
@@ -361,19 +407,19 @@ const Index = () => {
         );
       default:
         return (
-          <div className="flex flex-col items-center justify-center py-32 text-center space-y-6 animate-in fade-in duration-700">
-            <div className="w-24 h-24 rounded-[30px] bg-primary/10 flex items-center justify-center shadow-glow-soft">
-              <TrendingUp className="w-12 h-12 text-primary animate-bounce" />
+          <div className="flex flex-col items-center justify-center py-40 text-center space-y-8 animate-in fade-in duration-700">
+            <div className="w-32 h-32 rounded-[40px] bg-primary/10 flex items-center justify-center shadow-glow">
+              <TrendingUp className="w-16 h-16 text-primary animate-bounce" />
             </div>
-            <div className="space-y-2">
-              <h3 className="text-3xl font-black text-white tracking-tight">{activeTab} Module</h3>
-              <p className="text-slate-400 max-w-lg mx-auto text-lg font-medium leading-relaxed">
-                This high-fidelity interface is being synchronized with your learning patterns. Our neural engine is optimizing your {activeTab.toLowerCase()} experience.
+            <div className="space-y-3">
+              <h3 className="text-5xl font-black text-white tracking-tighter">{activeTab} Interface</h3>
+              <p className="text-slate-400 max-w-2xl mx-auto text-xl font-bold leading-relaxed">
+                Our neural engine is currently optimizing the {activeTab.toLowerCase()} trajectory based on your latest study sessions.
               </p>
             </div>
-            <div className="flex gap-4">
-               <Button className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-8" onClick={() => setActiveTab("Mission Control")}>Return to Control</Button>
-               <Button variant="outline" className="border-white/10 hover:bg-white/5 h-12 px-8">View Roadmap</Button>
+            <div className="flex gap-6">
+               <Button className="bg-primary hover:bg-primary/90 text-white font-black h-16 px-12 rounded-2xl shadow-glow text-lg" onClick={() => setActiveTab("Mission Control")}>Back to Center</Button>
+               <Button variant="outline" className="border-white/10 hover:bg-white/5 h-16 px-12 rounded-2xl text-lg font-black text-slate-400">Roadmap</Button>
             </div>
           </div>
         );
@@ -381,84 +427,64 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#030303] text-slate-100 font-sans selection:bg-primary/30 antialiased overflow-hidden">
-      {/* Aurora Background Effects */}
+    <div className="min-h-screen bg-[#020202] text-slate-100 font-sans selection:bg-primary/30 antialiased overflow-hidden">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] rounded-full bg-primary/10 blur-[150px] animate-pulse duration-[8s]" />
-        <div className="absolute bottom-[-20%] left-[-10%] w-[800px] h-[800px] rounded-full bg-accent/10 blur-[150px] animate-pulse duration-[10s]" />
+        <div className="absolute top-[-25%] right-[-10%] w-[1000px] h-[1000px] rounded-full bg-primary/15 blur-[180px] animate-pulse duration-[10s]" />
+        <div className="absolute bottom-[-25%] left-[-10%] w-[1000px] h-[1000px] rounded-full bg-accent/15 blur-[180px] animate-pulse duration-[12s]" />
       </div>
 
       <div className="relative z-10 flex h-screen">
-        {/* Left Navigation Sidebar */}
-        <aside className="w-20 lg:w-72 border-r border-white/5 bg-black/60 backdrop-blur-3xl flex flex-col items-center lg:items-start p-6 gap-10 shrink-0">
-          <div className="flex items-center gap-4 px-2">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-hero flex items-center justify-center shadow-glow group-hover:scale-110 transition-transform">
-              <BrainCircuit className="w-7 h-7 text-white" />
+        <aside className="w-20 lg:w-80 border-r border-white/5 bg-black/70 backdrop-blur-3xl flex flex-col items-center lg:items-start p-8 gap-12 shrink-0">
+          <div className="flex items-center gap-5 px-2">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-hero flex items-center justify-center shadow-glow transition-transform hover:scale-110">
+              <BrainCircuit className="w-8 h-8 text-white" />
             </div>
-            <span className="hidden lg:block font-black text-2xl tracking-tighter text-gradient-aurora">Study OS</span>
+            <span className="hidden lg:block font-black text-3xl tracking-tighter text-gradient-aurora">Study OS</span>
           </div>
 
-          <nav className="flex-1 w-full space-y-3">
+          <nav className="flex-1 w-full space-y-4">
             {sidebarItems.map((item, i) => (
-              <button 
-                key={i} 
-                onClick={() => setActiveTab(item.label)}
-                className={`flex items-center gap-4 w-full p-4 rounded-2xl transition-all duration-300 group ${
-                  activeTab === item.label ? "bg-primary/15 text-white shadow-glow-soft" : "hover:bg-white/5 text-slate-400"
-                }`}
-              >
-                <item.icon className={`w-6 h-6 transition-all duration-300 ${
-                  activeTab === item.label ? "text-primary scale-110" : "group-hover:text-primary group-hover:scale-110"
-                }`} />
-                <span className={`hidden lg:block font-bold text-lg ${
-                  activeTab === item.label ? "text-white" : "group-hover:text-slate-100"
-                }`}>{item.label}</span>
-                {activeTab === item.label && <div className="hidden lg:block ml-auto w-1.5 h-1.5 rounded-full bg-primary shadow-glow" />}
+              <button key={i} onClick={() => setActiveTab(item.label)} className={`flex items-center gap-5 w-full p-5 rounded-[24px] transition-all duration-500 group ${
+                activeTab === item.label ? "bg-primary/20 text-white shadow-glow" : "hover:bg-white/5 text-slate-400"
+              }`}>
+                <item.icon className={`w-7 h-7 transition-all duration-500 ${activeTab === item.label ? "text-primary scale-110 shadow-glow" : "group-hover:text-primary group-hover:scale-110"}`} />
+                <span className={`hidden lg:block font-black text-xl tracking-tight ${activeTab === item.label ? "text-white" : "group-hover:text-slate-100"}`}>{item.label}</span>
+                {activeTab === item.label && <div className="hidden lg:block ml-auto w-2 h-2 rounded-full bg-primary shadow-glow animate-pulse" />}
               </button>
             ))}
           </nav>
           
-          <div className="w-full p-6 bg-white/[0.03] rounded-3xl border border-white/5 space-y-4">
-            <div className="hidden lg:block space-y-3">
+          <div className="w-full p-8 bg-white/[0.03] rounded-[40px] border border-white/5 space-y-5">
+            <div className="hidden lg:block space-y-4">
               <div className="flex justify-between items-end">
-                <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-black">Daily Mastery</p>
-                <p className="text-xs text-primary font-black">75%</p>
+                <p className="text-[12px] uppercase tracking-[0.3em] text-slate-500 font-black">Neural Mastery</p>
+                <p className="text-sm text-primary font-black">75%</p>
               </div>
-              <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden p-[1px]">
+              <div className="h-2.5 w-full bg-white/5 rounded-full overflow-hidden p-[1px] border border-white/10">
                 <div className="h-full w-[75%] bg-gradient-hero rounded-full shadow-glow animate-pulse" />
               </div>
             </div>
           </div>
         </aside>
 
-        {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-6 lg:p-12 space-y-12 no-scrollbar scroll-smooth">
-          {/* Header Section */}
-          <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-            <div className="space-y-1">
-              <div className="flex items-center gap-3">
-                 <h2 className="text-5xl font-black text-white tracking-tighter">{activeTab}</h2>
-                 <Badge className="bg-primary/20 text-primary border-none font-black px-3 py-1">V2.4.0</Badge>
+        <main className="flex-1 overflow-y-auto p-8 lg:p-16 space-y-16 no-scrollbar scroll-smooth">
+          <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+            <div className="space-y-2">
+              <div className="flex items-center gap-5">
+                 <h2 className="text-7xl font-black text-white tracking-tighter">{activeTab}</h2>
+                 <Badge className="bg-primary/20 text-primary border-none font-black px-4 py-1.5 text-xs rounded-lg">SYS_V2.5</Badge>
               </div>
-              <p className="text-slate-400 uppercase text-xs tracking-[0.3em] font-black flex items-center gap-3">
-                <span className={`w-2.5 h-2.5 rounded-full animate-ping ${activeTab === "Mission Control" ? "bg-green-500" : "bg-primary"}`} />
-                {activeTab === "Mission Control" ? "Adaptive Neural Engine Active" : "Module Fully Synchronized"}
+              <p className="text-slate-500 uppercase text-xs tracking-[0.4em] font-black flex items-center gap-4">
+                <span className={`w-3 h-3 rounded-full animate-ping ${activeTab === "Mission Control" ? "bg-green-500" : "bg-primary shadow-glow"}`} />
+                {activeTab === "Mission Control" ? "Neural Engine Live" : "Trajectory Synchronized"}
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              <Button 
-                onClick={() => {
-                  toast.success("New AI-optimized session starting...");
-                  setActiveTab("Mission Control");
-                }}
-                className="bg-gradient-hero hover:scale-105 transition-all text-white font-black h-14 px-8 rounded-2xl shadow-glow border-none text-lg"
-              >
-                <Plus className="w-6 h-6 mr-2" /> New Study Session
-              </Button>
-            </div>
+            <Button onClick={() => { toast.success("New AI session starting..."); setActiveTab("Mission Control"); }} className="bg-gradient-hero hover:scale-105 transition-all text-white font-black h-16 px-10 rounded-2xl shadow-glow border-none text-xl">
+               <Plus className="w-7 h-7 mr-2" /> Start Node
+            </Button>
           </header>
 
-          <div className="pb-20">
+          <div className="pb-32">
             {renderContent()}
           </div>
         </main>
@@ -467,16 +493,16 @@ const Index = () => {
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .glass { background: rgba(10, 10, 10, 0.7); backdrop-filter: blur(25px) saturate(200%); }
-        .shadow-glow { box-shadow: 0 0 30px rgba(155, 135, 245, 0.4); }
-        .shadow-glow-soft { box-shadow: 0 0 20px rgba(155, 135, 245, 0.15); }
+        .glass { background: rgba(5, 5, 5, 0.8); backdrop-filter: blur(40px) saturate(250%); }
+        .shadow-glow { box-shadow: 0 0 40px rgba(155, 135, 245, 0.4); }
+        .shadow-glow-soft { box-shadow: 0 0 25px rgba(155, 135, 245, 0.2); }
         .text-gradient-aurora {
-          background: linear-gradient(120deg, #9b87f5, #d946ef, #0ea5e9, #f97316);
-          background-size: 300% 300%;
+          background: linear-gradient(120deg, #9b87f5, #d946ef, #0ea5e9, #f97316, #9b87f5);
+          background-size: 400% 400%;
           -webkit-background-clip: text;
           background-clip: text;
           color: transparent;
-          animation: aurora 10s ease infinite;
+          animation: aurora 15s ease infinite;
         }
         @keyframes aurora {
           0% { background-position: 0% 50%; }
